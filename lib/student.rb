@@ -1,8 +1,7 @@
 require_relative "../config/environment.rb"
 
 class Student
-  attr_accessor :name, :grade
-  attr_reader :id
+  attr_accessor :name, :grade, :id
 
   # Remember, you can access your database connection anywhere in this class
   #  with DB[:conn]
@@ -33,8 +32,7 @@ class Student
 
   def save
     if self.id
-      sql = "UPDATE students SET name = ?, grade = ?, id = ?"
-      DB[:conn].execute(sql, self.name, self.grade, self.id)
+      update
     else
       sql = "INSERT INTO students (name, grade) VALUES (?, ?)"
       DB[:conn].execute(sql, self.name, self.grade)
@@ -48,14 +46,22 @@ class Student
   end
 
   def self.new_from_db(row)
-    student = Student.new(row[0], row[1], row[2])
-    student
+    id = row[0]
+    name = row[1]
+    grade = row[2]
+    Student.new(name, grade, id)
   end
 
-  def self.find_by_name
+  def self.find_by_name(name)
+    sql = "SELECT * FROM students WHERE name = ?"
+    DB[:conn].execute(sql, name).map do |row|
+      self.new_from_db(row)
+    end.first
   end
 
   def update
+    sql = "UPDATE students SET id = ?, name = ?, grade = ?"
+    DB[:conn].execute(sql, self.id, self.name, self.grade)
   end
 
 end
